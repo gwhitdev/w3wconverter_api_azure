@@ -22,10 +22,12 @@ namespace W3WParser.Controllers
         }
         [HttpPost]
         [Route("/api/input")]
-        public IActionResult PostInput([FromBody] string body)
+        public IActionResult PostInput([FromBody] InputFromBody body)
         {
             _logger.LogInformation("Trying to parse data...");
-            
+
+            //return Ok();
+
             try
             {
                 CSVReader reader = new();
@@ -47,6 +49,8 @@ namespace W3WParser.Controllers
             
         }
     }
+
+    
 
     public class InputTestResponse
     {

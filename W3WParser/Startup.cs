@@ -10,6 +10,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
+using System.IO;
+using Microsoft.OpenApi.Models;
 
 namespace W3WParser
 {
@@ -27,7 +30,15 @@ namespace W3WParser
         {
 
             services.AddControllers();
-            services.AddSwaggerGen();
+            services.AddSwaggerGen(c =>
+                {
+                    c.SwaggerDoc("v1", new OpenApiInfo
+                    {
+                        Version = "v1",
+                        Title = "W3WParser API",
+                    });
+                }
+            );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -41,13 +52,22 @@ namespace W3WParser
             app.UseHttpsRedirection();
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.
-            app.UseSwagger();
+            app.UseSwagger(c =>
+                {
+                    c.PreSerializeFilters.Add((swagger, httpReq) =>
+                    {
+                        swagger.Servers = new List<OpenApiServer> { new OpenApiServer { Url = $"{httpReq.Scheme}://{httpReq.Host.Value}" } };
+                    });
+                }
+            );
 
             // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.)
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
                 c.RoutePrefix = string.Empty;
+                
+                
             }); 
 
             app.UseRouting();
