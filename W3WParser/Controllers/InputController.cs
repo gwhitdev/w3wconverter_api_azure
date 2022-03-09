@@ -26,9 +26,9 @@ namespace W3WParser.Controllers
         {
             _logger.LogInformation("Trying to parse data...");
             
-            CSVReader reader = new();
             try
             {
+                CSVReader reader = new();
                 var output = reader.ReadCsvFile(body);
                 return Ok(new[]
                 {
@@ -52,7 +52,4 @@ namespace W3WParser.Controllers
     {
         public string Text { get; set; }
     }
-
-    
-
 }
