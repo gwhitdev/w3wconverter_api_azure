@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Models\" />
+    <None Remove="Interface\" />
+    <None Remove="Models\Responses\" />
+    <None Remove="Models\Requests\" />
+    <None Remove="Models\Objects\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="Models\Responses\" />
+    <Folder Include="Models\Requests\" />
+    <Folder Include="Models\Objects\" />
+  </ItemGroup>
+</Project>
