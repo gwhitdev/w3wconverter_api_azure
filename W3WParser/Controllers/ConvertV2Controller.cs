@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,9 +6,7 @@ using Microsoft.Extensions.Logging;
 using Core.Models.Objects;
 using Services.Services;
 using W3WParser.Services;
-using Microsoft.Extensions.Configuration;
 using System.Net.Http;
-using System.Text.Json;
 using Core.Models.Responses;
 using System.Net.Http.Json;
 
@@ -76,6 +72,7 @@ namespace W3WParser.Controllers
             {
                 CSVReader reader = new();
                 var received = reader.ReadCsvFile(body);
+
                 Output output = new();
 
                 try
@@ -119,39 +116,19 @@ namespace W3WParser.Controllers
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
-        private async Task<Output.Coord> GetLatLongFromGoogle(string pc)
+        private async Task<Coords> GetLatLongFromGoogle(string postcode)
         {
-            string GOOGLE_API_KEY = new GoogleApiWebService().GetGoogleApiKey();
-            string POSTCODE = pc;
-
-
-            Output.Coord coords = new();
             var httpClient = _httpClientFactory.CreateClient("googleApiClient");
-            var response = await httpClient.GetFromJsonAsync<GoogleResponse.Root>(
-                    $"json?input={POSTCODE}&inputtype=textquery&fields=geometry&key={GOOGLE_API_KEY}"
-                );
-            coords.Lat = response.candidates[0].geometry.location.lat.ToString();
-            coords.Lng = response.candidates[0].geometry.location.lng.ToString();
-
-            return coords;
+            GoogleApiWebService googleService = new(httpClient, postcode);
+            return await googleService.Get();
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
         private async Task<W3WAddress> GetW3W(string lat, string lng)
         {
-            string W3W_API_KEY = new W3WApiService().GetApiKey();
-
             var httpClient = _httpClientFactory.CreateClient("w3wApiClient");
-            var response = await httpClient.GetFromJsonAsync<W3WResponse.Root>(
-                    $"v3/convert-to-3wa?coordinates={lat}%2C{lng}&key={W3W_API_KEY}"
-                );
-
-
-            W3WAddress address = new();
-            address.Address = response.words;
-
-
-            return address;
+            W3WApiService w3wService = new(httpClient, lat, lng);
+            return await w3wService.Get();
         }
 
     }
