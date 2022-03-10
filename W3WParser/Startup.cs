@@ -13,6 +13,17 @@ using Microsoft.Extensions.Logging;
 using System.Reflection;
 using System.IO;
 using Microsoft.OpenApi.Models;
+using System.Net.Http.Headers;
+using W3WParser.Models;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using static Microsoft.AspNetCore.Mvc.Versioning.ApiVersionMapping;
+
+using Swashbuckle.AspNetCore.SwaggerGen;
+using Microsoft.Extensions.Options;
 
 namespace W3WParser
 {
@@ -23,26 +34,53 @@ namespace W3WParser
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
-
+        //public IConfiguration Configuration { get; }
+        internal static IConfiguration Configuration { get; private set; }
+        
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
 
             services.AddControllers();
-            services.AddSwaggerGen(c =>
+            services.AddApiVersioning(options =>
                 {
-                    c.SwaggerDoc("v1", new OpenApiInfo
-                    {
-                        Version = "v1",
-                        Title = "W3WParser API",
-                    });
+                    options.ReportApiVersions = true;
                 }
             );
-        }
+            
+            services.AddVersionedApiExplorer(
+                o =>
+                {
+                    o.GroupNameFormat = "'v'VVV";
+                    o.SubstituteApiVersionInUrl = true;
+                });
+            services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+            services.AddSwaggerGen(c =>
+            {
+               
+                c.OperationFilter<SwaggerDefaultValues>();
+                c.IncludeXmlComments(XmlCommentsFilePath);
+            }
+            );
+
+            services.AddHttpClient("googleApiClient", client =>
+            {
+                client.BaseAddress = new Uri("https://maps.googleapis.com/maps/api/place/findplacefromtext/");
+                client.DefaultRequestHeaders.Add("User-Agent", "w3wparser");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            });
+
+            services.AddHttpClient("w3wApiClient", client =>
+            {
+                client.BaseAddress = new Uri("https://api.what3words.com/");
+                client.DefaultRequestHeaders.Add("User-Agent", "w3wparser");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            });
+            
+           }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IApiVersionDescriptionProvider provider)
         {
             if (env.IsDevelopment())
             {
@@ -62,10 +100,16 @@ namespace W3WParser
             );
 
             // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.)
-            app.UseSwaggerUI(c =>
+            app.UseSwaggerUI(options =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-                c.RoutePrefix = string.Empty;
+                //c.SwaggerEndpoint("/swagger/v1/swagger.json", $"v1");
+                //c.SwaggerEndpoint("/swagger/v2/swagger.json", $"v2");
+                options.RoutePrefix = string.Empty;
+
+                foreach (var description in provider.ApiVersionDescriptions)
+                {
+                    options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+                }
                 
                 
             }); 
@@ -74,10 +118,20 @@ namespace W3WParser
 
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
+            app.UseEndpoints(builder =>
             {
-                endpoints.MapControllers();
+                builder.MapControllers();
             });
+        }
+
+        static string XmlCommentsFilePath
+        {
+            get
+            {
+                var basePath = PlatformServices.Default.Application.ApplicationBasePath;
+                var fileName = typeof(Startup).GetTypeInfo().Assembly.GetName().Name + ".xml";
+                return Path.Combine(basePath, fileName);
+            }
         }
     }
 }
