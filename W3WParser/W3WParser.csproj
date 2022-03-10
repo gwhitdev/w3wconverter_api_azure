@@ -9,6 +9,11 @@
     <DocumentationFile>bin\Debug\net5.0\W3WParser.xml</DocumentationFile>
     <NoWarn>1701;1702;1591</NoWarn>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\net5.0\W3WParser.xml</DocumentationFile>
+    <NoWarn>1701;1702;1591</NoWarn>
+  </PropertyGroup>
   <ItemGroup>
     <None Remove="Models\" />
     <None Remove="Microsoft.VisualStudio.Web.CodeGeneration.Design" />
@@ -20,17 +25,18 @@
     <None Remove="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" />
     <None Remove="Microsoft.AspNetCore.Mvc.ApiExplorer" />
     <None Remove="Microsoft.Extensions.PlatformAbstractions" />
+    <None Remove="Properties\PublishProfiles\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
     <Folder Include="Services\" />
+    
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.ApiExplorer" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.PlatformAbstractions" Version="1.1.0" />
   </ItemGroup>
   <ItemGroup>
