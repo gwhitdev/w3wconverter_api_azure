@@ -8,17 +8,23 @@ namespace Services.Services
 {
     public class CSVReader
     {
+        private InputFromBody _input;
 
-        public Output ReadCsvFile(InputFromBody input)
+        public CSVReader(InputFromBody input)
         {
-            Output output = new();
-            output.Postcodes = new List<string>();
-            output.Uids = new List<string>();
-            var pcs = output.Postcodes;
-            var uids = output.Uids;
+            _input = input;
+        }
 
-            var pcValues = input.PostCodes[0].Split(',');
-            var uidsValues = input.Uids[0].Split(',');
+        public ListOfPostcodes ReadCsv()
+        {
+            ListOfPostcodes list = new();
+            list.Postcodes = new();
+            list.Uids = new();
+            var pcs = list.Postcodes;
+            var uids = list.Uids;
+
+            var pcValues = _input.PostCodes[0].Split(',');
+            var uidsValues = _input.Uids[0].Split(',');
 
             // Check the length of the values array and throw exception if provided array probably doesn't contain anything
             if (((pcValues.Length == 0 || pcValues.Length == 1) && (string.IsNullOrWhiteSpace(pcValues[0]) || string.IsNullOrEmpty(pcValues[0]))))
@@ -31,7 +37,7 @@ namespace Services.Services
                 uids.Add(uidsValues[i]);
             }
 
-            if (pcs.Count > 0) return output;
+            if (pcs.Count > 0) return list;
             throw new Exception("Unknown error: could not process");
         }
     }

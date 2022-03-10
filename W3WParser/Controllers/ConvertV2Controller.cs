@@ -30,7 +30,7 @@ namespace W3WParser.Controllers
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
-        public Conversion CreateConversion(string id, W3WAddress w3wAddress, string postcode, string latLong)
+        private static Conversion CreateConversion(string id, W3WAddress w3wAddress, string postcode, Coords latLong)
         {
             Conversion conversion = new();
             conversion.Id = id;
@@ -39,7 +39,7 @@ namespace W3WParser.Controllers
             Addresses addresses = new();
             addresses.Postcode = postcode;
             addresses.W3WAddress = w3wAddress;
-            addresses.LatLong = latLong;
+            addresses.LatLong = $"{latLong.Lat},{latLong.Lng}";
 
             conversion.Addresses.Add(addresses);
             return conversion;
@@ -70,27 +70,18 @@ namespace W3WParser.Controllers
 
             try
             {
-                CSVReader reader = new();
-                var received = reader.ReadCsvFile(body);
-
-                Output output = new();
+                CSVReader receivedBody = new(body);
+                var csv = receivedBody.ReadCsv();
 
                 try
                 {
-                    output.Postcodes = new();
-                    output.Uids = new();
-                    output.Coords = new();
-                    output.W3WAddress = new();
-
                     finalOutput.Conversion = new();
 
-                    for (var i = 0; i < received.Postcodes.Count; i++)
+                    for (var i = 0; i < csv.Postcodes.Count; i++)
                     {
-                        var coord = await GetLatLongFromGoogle(received.Postcodes[i]);
-                        var w3w = await GetW3W(coord.Lat, coord.Lng);
-                        string latLong = $"{coord.Lat},{coord.Lng}";
-                        var tempFinalOutput = CreateConversion(received.Uids[i], w3w, received.Postcodes[i], latLong);
-                        finalOutput.Conversion.Add(tempFinalOutput);
+                        var coords = await GetLatLongFromGoogle(csv.Postcodes[i]);
+                        var w3w = await GetW3W(coords.Lat, coords.Lng);
+                        finalOutput.Conversion.Add(CreateConversion(csv.Uids[i], w3w, csv.Postcodes[i], coords));
                     }
                 }
                 catch (Exception ex)
@@ -106,9 +97,8 @@ namespace W3WParser.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                var output = "No values provided";
                 return BadRequest(new[] {
-                    output
+                    "No values provided"
                 });
             }
 
